@@ -1,17 +1,26 @@
 #include <stdio.h>
 #include <limits.h>
+#include <float.h>
 
 long power(int base, int exp);
 
 int main() {
-    int char_MAX = power(2,8);
-    int integer_MAX = power(2,31);
-    printf("Max value for an object of type int: %d\n", INT_MAX);
-    printf("Min value for an object of type int: %d\n", INT_MIN);
-    printf("Check: %d\n", (int) power(2,31)-1);
-    printf("\nMax value for an object of type long: %ld\n", LONG_MAX);
-    printf("Min value for an object of type long: %ld\n", LONG_MIN);
-    printf("Check: %ld\n", power(2,63) -1);
+    int i1 = CHAR_BIT;
+    int i2 = CHAR_MAX;
+    int i3 = CHAR_MIN;
+    int i4 = INT_MAX;
+    int i5 = INT_MIN;
+    long l1 = LONG_MAX;
+    long l2 = LONG_MIN;
+    short s1 = SHRT_MAX;
+    short s2 = SHRT_MIN;
+    int i6 = UCHAR_MAX;
+    __u_int i7 = UINT_MAX;
+    __u_long l3 = ULONG_MAX;
+    __u_short s3 = USHRT_MAX;
+
+    printf("CHAR_BIT %d\nCHAR_MAX: %d\nCHAR_MIN: %d\nINT_MAX: %d\nINT_MIN: %d\nUCHAR_MAX: %d\nUINT_MAX: %u\nULONG_MAX: %lu\nUSHRT_MAX: %d\n",i1,i2,i3,i4,i5,i6,i7,l3,s3);
+
     return 0;
 }
 long power(int base, int exp) {

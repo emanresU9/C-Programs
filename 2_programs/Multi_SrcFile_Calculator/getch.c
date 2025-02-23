@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "calc.h"
 
 #define BUFSIZE 100
 
@@ -9,7 +10,7 @@ int getch(void) {
     return (bufp > 0) ? buf[--bufp] : getchar();
 }
 
-void uncetch(int c) {
+void ungetch(int c) {
     if (bufp >= BUFSIZE)
         printf("ungetch: too many characters\n");
     else 

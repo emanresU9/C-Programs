@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <sys/types.h>
-// #include "Timeit.c"
 #include <sys/time.h>
 
 int cols = 3;
@@ -17,7 +16,7 @@ double compare_timevals(struct timeval end, struct timeval start);
 
 int main() {
 
-    printf("Starting program\n\n");
+    printf("Starting program: HW3_Basic_Forking\n\n");
     printf("starting timer\n\n");
 
     struct timeval start = get_my_timeval();
@@ -41,8 +40,22 @@ int main() {
 
     struct timeval end = get_my_timeval();
     double elapsed = compare_timevals(end, start);
-    printf("\n\nElapsed time: %f\n", elapsed);
+    printf("\n\nElapsed time: %f\n\n", elapsed);
+
+    printf("Done\n\n\n");
 
 
     return 0;
+}
+
+struct timeval get_my_timeval(){
+    struct timeval current;
+    gettimeofday(&current,NULL);
+    return current;
+}
+double compare_timevals(struct timeval end, struct timeval start) {
+    double result;
+    result = (end.tv_sec - start.tv_sec);
+    result += (end.tv_usec - start.tv_usec) / (double) 1000000;
+    return result;
 }

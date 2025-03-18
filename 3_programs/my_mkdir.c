@@ -1,10 +1,11 @@
 #include <stdio.h>
+#include <unistd.h>
+#include <sys/stat.h>
+
+struct stat st = {0};
 
 int main(int argc, char **argv) {
-    printf("You havee  entered %d arguments\n", argc);
-    printf("Those args are:\n");
-    for (int i = 0; i < argc; i++) {
-        printf("%d\t%c\n", i, (argv[i])[0]);
-    }
+    if (stat(argv[1],&st) == -1)
+        mkdir(argv[1], 0700);
     return 0;
 }

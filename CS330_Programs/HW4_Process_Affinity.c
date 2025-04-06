@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
     for (int i = 1; i <= proc_num; i++) {
         gettimeofday(&start, NULL);
         for (int j = 0; j < i; j++)
-            CPU_SET(i, &mask);
+            CPU_SET(j, &mask);
         sched_setaffinity(0, sizeof(cpu_set_t), &mask);
         for (int j = 0; j < parseInt(argv[1]); j++) {
             if (fork() == 0) {

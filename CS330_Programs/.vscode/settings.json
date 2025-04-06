@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "ratio": "c"
+        "ratio": "c",
+        "unistd.h": "c",
+        "stdio.h": "c"
     }
 }

@@ -1,158 +1,158 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
-#include <sched.h>
 #include <unistd.h>
-#include <stdbool.h>
+#include <sched.h>
 #include <wait.h>
-// #include <string.h>
-// #include <math.h>
+#include <sys/time.h>
+#include <time.h>
 
-#define MULTITHREADING true //Program runs faster when true
-#define THREADS 100         //Each thread runs a test function.
-                             // More threads => longer user time
-#define VERBOSE false       //Not to be used when program is being timed
+//////////////// SYNTAX ////////////////
+// The Syntax for executing this program
+// is: ./a.out <int> 
+// where <int> is the number of processes
+// you whish to run. 
+///////////// DESCRIPTION ///////////////
+// This program tests the use of multiple
+// processors by running quickSort & shuffle,
+// while using [1-n] processors, where n is the
+// total number of processors on the system.
+// After each test it prints the elapsed time 
+// to run m processes using [1-n] processors.
 
-void test_function(int thread_i);
+void quickSort(char *arr[]);
+void reQuickSort(char* arr[], int left, int right);
+void shuffle(char **arr);
+void swap(char* arr[], int i, int j);
+int compare_string(char* s1, char* s2);
+int parseInt(char * str);
+void display(char **arr);
+double calc_elapsed(struct timeval stop, struct timeval start);
 
-// This program scheduels a time-taking 
-// test_function to run on a single Core
-// or on multiple depending on the boolean
-// value of the macro, MULTITRHEADING. 
-// The program uses the same number of threads
-// independent of the use of multiple cores.
-// Thread number can be set with the macro, 
-// THREADS.
+char *animals[] = {"Sheep", "Ape", "Louse", "Elk", "Kangaroo", "Leapard", "Human", "Chicken", "Mallard", "Kookabura", "Ape", "Mantis", "Dugong", "Newt", "Conda", "Barracuda", "Lapwing", "Penguin", "Narwhal", "Jackal", "Gerbil", "Heron", "Goldfish", "Otter", "Cod", "Chicken", "Cobra", "Koala", "Hornet", "Ferret", "Dove", "Eland", "Cow", "Cormorant", "Caterpillar", "Dolphin", "Chough", "Jellyfish", "Zebra", "Frog", "Hippopotamus", "Cheetah", "Cassowary", "Gorilla", "Buffalo", "Lyrebird", "Crocodile", "Octopus", "Chinchilla", "Caribou", "Eel", "Seagull", "Lark", "Duck", "Alpaca", "Mule", "Pig", "Owl", "Jaguar", "Boar", "Gnat", "Dog", "Echidna", "Marten", "Okapi", "Meerkat", "Dragonfly", "Goat", "Boxelder", "Manatee", "Mosquito", "Mantis", "Lion", "Dotterel", "Beaver", "Mantis", "Baboon", "Antelope", "Turtle", "Armadillo", "Alligator", "Dunlin", "Chamois", "Partridge", "Linx", "Goldfinch", "Cattle", "Wolf", "Finch", "Guanaco", "Camel", "Crow", "Moose", "Kudu", "Goose", "Chimpanzee", "Gaur", "Grasshopper", "Bat", "Ant", "Gnu", "Opossum", "Albatross", "Mandrill", "Ladybug", "Fox", "Mouse", "Elephant", "Hamster", "Giraffe", "Mink", "Dove", "Goose", "Magpie", "Fish", "Ant", "Crane", "Grouse", "Jay", "Firefly", "Bat", "Llama", "Loris", "Aardvark", "Ibis", "Butterfly", "Pelican", "Bee", "Bear", "Dogfish", "Beetle", "Hare", "Lemur", "Worm", "Badger", "Bee", "Cattapillar", "Cat", "Hawk", "Clam", "Capybara", "Donkey", "Pigeon", "Spider", "Emu", "Peafowl", "Gazelle", "Pheasant", "Lobster", "Dinosaur", "Goshawk", "Penguin", "Eagle", "Horse", "Panther", "Peggasis", "Leopard", "Hippo", "Mongoose", "Hedgehog", "Hyena", "Ostrich", "Locust", "Kouprey", "Parrot", "Gull", "Elephant", "Kingfisher", "Hummingbird", "Nightingale", "Flamingo", "Parot", "Deer", "Monkey", "Ibex", "Curlew", "Crab", "Frog", "Horse", "Fly", "Oryx", "Herring", "Cockroach", "Mole", "Pig", "Falcon", "Oyster", "Coyote", "Anteater", "Bison", "Deer"};
 
-//// PSEUDO CODE ////
-// 1. BEGIN Prog4_Processor_Affinity.c
-// 2. FOR 4 iterations
-// 3.   Fork() 
-// 4.   IF in child process
-// 5.     IF using multiple cores
-//          set process' proccessor affinity to run on all CPUs
-// 6.     ELSE
-//          set process' processor affinity to use only one CPU
-//        ENDIF using multiple cores
-// 7.     Run a test program
-// 8.     exit process
-//      ENDIF in child process
-//    ENDFOR 4 iterations
-// 9. Wait for child processes to complete
-// 10. exit process
-// 11. DONE
+const int SIZE = sizeof(animals)/sizeof(char*);
 
-int main() {
-    int cpu_count;      // System dependent
-    cpu_set_t mask;     // A datatype used by the setAffinity function
-
-    // Initialization of mask
-    CPU_ZERO(&mask);    
-
-    //Determin cpu_count if using multithreading
-    if (MULTITHREADING)
-        cpu_count = sysconf(_SC_NPROCESSORS_ONLN);
-    else 
-        cpu_count = 1;
-
-    //For loop fork then set processor affinity 
-    for (int thread_i = 0; thread_i < THREADS; ++thread_i)
-        if (fork() == 0) {
-            //Set the mask to use availble processors
-            for (int i = 0; i < cpu_count; i++)
-                CPU_SET(i, &mask);
-            //set the processes processor affinity
-            sched_setaffinity(0, sizeof(cpu_set_t), &mask);
-            //Run test program. Parameter used by test_program to control its process.
-            test_function(thread_i);
-            exit(0);
-        }
-    
-    // Wait for processes to finish
-    int status;
-    for (int i = 0; i < THREADS; i++) {
-        wait(&status);
-        if (WIFEXITED(status)) {
-            if (WEXITSTATUS(status) == EXIT_FAILURE) {
-                printf("Error occured in test_program\n");
-                printf("Exit code: %d\n", (WEXITSTATUS(status)));
-                exit(2);
-            }
-        }
+int main(int argc, char **argv) {
+    if (argc != 2) {
+        printf("Argument-Exception: Please provide one argument.\n");
+        printf("\t Syntax: /a.out <int>\n");
+        exit(1);
     }
-    return 0;
-}
-
-void quickSortStrings(char *sArray[], int left, int right); //An easy sorting function 
-void displayStrArray(char *sArray[], int size, int setNum);
-
-void test_function(int thread_i){
-    //names is a set of sortable elements
-    char *names[] = {"Zebra","Goose","Turtle","Penguin","Hippo","Frog","Leapard","Deer","Ape","Seagull","Bee", "Cow", "Horse", "Pig", "Chicken", "Bat", "Parot", "Mantis", "Dove", "Elephant", "Mantis", "Sheep", "Wolf", "Peggasis", "Conda", "Firefly", "Beetle", "Worm", "Spider", "Boxelder", "Ant", "Linx", "Cattapillar", "Ladybug", "Aardvark","Albatross","Alligator","Alpaca","Ant","Anteater","Antelope","Ape","Armadillo","Donkey","Baboon","Badger","Barracuda","Bat","Bear","Beaver","Bee","Bison","Boar","Buffalo","Butterfly","Camel","Capybara","Caribou","Cassowary","Cat","Caterpillar","Cattle","Chamois","Cheetah","Chicken","Chimpanzee","Chinchilla","Chough","Clam","Cobra","Cockroach","Cod","Cormorant","Coyote","Crab","Crane","Crocodile","Crow","Curlew","Deer","Dinosaur","Dog","Dogfish","Dolphin","Dotterel","Dove","Dragonfly","Duck","Dugong","Dunlin","Eagle","Echidna","Eel","Eland","Elephant","Elk","Emu","Falcon","Ferret","Finch","Fish","Flamingo","Fly","Fox","Frog","Gaur","Gazelle","Gerbil","Giraffe","Gnat","Gnu","Goat","Goldfinch","Goldfish","Goose","Gorilla","Goshawk","Grasshopper","Grouse","Guanaco","Gull","Hamster","Hare","Hawk","Hedgehog","Heron","Herring","Hippopotamus","Hornet","Horse","Human","Hummingbird","Hyena","Ibex","Ibis","Jackal","Jaguar","Jay","Jellyfish","Kangaroo","Kingfisher","Koala","Kookabura","Kouprey","Kudu","Lapwing","Lark","Lemur","Leopard","Lion","Llama","Lobster","Locust","Loris","Louse","Lyrebird","Magpie","Mallard","Manatee","Mandrill","Mantis","Marten","Meerkat","Mink","Mole","Mongoose","Monkey","Moose","Mosquito","Mouse","Mule","Narwhal","Newt","Nightingale","Octopus","Okapi","Opossum","Oryx","Ostrich","Otter","Owl","Oyster","Panther","Parrot","Partridge","Peafowl","Pelican","Penguin","Pheasant","Pig","Pigeon"};
-
-    //Determin size of set
-    int size = sizeof(names)/sizeof(names[0]);
-
-    //Select a number of the elements to sort in this process
-    // by choosing a start and end index for the sorting array 
-    int portion = size/sysconf(_SC_NPROCESSORS_ONLN);
-    int start = thread_i*portion%size, end;
-    if ((end = start + portion) >= size) 
-        end = size-1;
-
-    //Sort the elements
-    quickSortStrings(names, start, end);
-
-    //Dispaly the sorted portion if VERBOSE is set to true
-    if (VERBOSE) 
-        displayStrArray(names, size, thread_i);
-    else 
-        getpid();
-}
-void displayStrArray(char *sArray[], int size, int setNum) {
-    for (int i = 0; i < size; i++) 
-        printf("set #%d %s\n", setNum, sArray[i]);
-}
-
-void swap(char *sArray[], int i, int j);   //used in quicksort 
-int comp(char *sArray[], int i, int j);   //comparison method used in quicksort
-
-//Recusive function to sort elements
-void quickSortStrings(char *sArray[], int left, int right) {
-    if (left < right) {
-        int min = left, max = right;
-        swap (sArray, left, (left+right)/2);
-
-        while (min < max) {
-            while (min < max && comp(sArray,min,left) <= 0) {
-                min++;
-            }
-            while (comp(sArray, max, left) > 0) {
-                max--;
-            }
-        
-            if (min < max) {
-                swap(sArray, min, max);
+    int proc_num = sysconf(_SC_NPROCESSORS_ONLN);
+    struct timeval start, stop;
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
+    for (int i = 1; i <= proc_num; i++) {
+        gettimeofday(&start, NULL);
+        for (int j = 0; j < i; j++)
+            CPU_SET(i, &mask);
+        sched_setaffinity(0, sizeof(cpu_set_t), &mask);
+        for (int j = 0; j < parseInt(argv[1]); j++) {
+            if (fork() == 0) {
+                shuffle(animals);
+                quickSort(animals);
+                exit(0);
             }
         }
-        swap(sArray, left, max);
-        quickSortStrings(sArray, left, right-1);
-        quickSortStrings(sArray, max+1, right);
+        int status;
+        for (int j = 0; j < parseInt(argv[1]); j++) {
+            wait(&status);
+            if (WIFEXITED(status)) {
+                if (WEXITSTATUS(status) == EXIT_FAILURE) {
+                    printf("Error occured in test_program\n");
+                    printf("Exit code: %d\n", (WEXITSTATUS(status)));
+                    exit(2);
+                }
+            }
+        }
+        gettimeofday(&stop, NULL);
+        double elapsed = calc_elapsed(stop, start);
+        printf("Running %d processes using %d proccessors: elapsed time was: %f\n", parseInt(argv[1]), i, elapsed);
     }
 }
-void swap(char *sArray[], int i, int j) {
-    char *temp = sArray[i];
-    sArray[i] = sArray[j];
-    sArray[j] = temp;
+
+///////////////// FUNCTIONS //////////////////
+void display(char **arr) {
+    putchar('{');
+    for (int i = 0; i < SIZE; i++) {
+        if (i % 9 == 0)
+            putchar('\n');
+        if (i < SIZE -1)
+            printf("\"%s\", ", arr[i]);
+    }
+    printf("\"%s\"}\n", arr[SIZE-1]);
 }
-int comp(char *sArray[], int i, int j) {
-    int result;
-    int c_i = 0;
-    while (sArray[i][c_i] == sArray[j][c_i]) {
-        c_i++;
-        if (sArray[i][c_i] == '\0')
+void quickSort(char *arr[]) {
+    reQuickSort(arr, 0, SIZE-1);
+}
+void reQuickSort(char* arr[], int left, int right) {
+    if (left >= right)
+        return;
+    int curr_left = left;
+    int curr_right = right;
+    char* val_mid = arr[(curr_left + curr_right)/2];
+    swap(arr, left, (curr_left + curr_right)/2);
+    while(curr_left < curr_right) {
+        while (curr_left < curr_right && compare_string(arr[curr_left], val_mid) <= 0)
+            curr_left++;
+        while (compare_string(arr[curr_right], val_mid) > 0)
+            curr_right--;
+        if (curr_left < curr_right)
+            swap(arr, curr_left, curr_right);
+    }
+    swap(arr, left, curr_right);
+    reQuickSort(arr, left, curr_right-1);
+    reQuickSort(arr, curr_right+1, right);
+}
+void shuffle(char **arr) {
+    srand(time(NULL));
+    for (int i=0; i < SIZE; i++){
+        swap(arr, i, rand()%SIZE);
+    }
+    return;
+}
+void swap(char* arr[], int i, int j) {
+    char* temp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = temp;
+}
+int compare_string(char* s1, char* s2) {
+    // printf("compare_string(%s, %s)\n", s1, s2);
+    if (s1 == NULL || s2 == NULL) {
+        printf("Can't compare a NULL string. Sorry bro\n");
+        exit(1);
+    }
+    while(*s1 == *s2){
+        if (*s1 == '\0')
             return 0;
+        s1++;
+        s2++;
     }
-    result = (int)(sArray[i][c_i]) - (int)(sArray[j][c_i]);
+    return (unsigned char)*s1 - (unsigned char)*s2;
+}
+int parseInt(char * str) {
+    int result = 0;
+    int sign = 1;
+    int i = 0;
+    if (str[i] == '-') {
+        sign = -1;
+        i++;
+    } 
+    else if(str[i] == '+')
+        i++;
+    for (; str[i] != '\0' && str[i] >= '0' && str[i] <= '9'; i++) {
+        result = result*10 + str[i] - '0';
+    }
+    if (str[i] != '\0')
+        printf("Error parsing integer");
+    result *= sign;
     return result;
+}
+double calc_elapsed(struct timeval stop, struct timeval start) {
+    return start.tv_usec > stop.tv_usec ?
+    (double)(stop.tv_sec - start.tv_sec) - 1 + 
+    (double)(1000000 +stop.tv_usec -start.tv_usec) /1000000 : 
+    (double)(stop.tv_sec - start.tv_sec) + 
+    (double)(stop.tv_usec -start.tv_usec) /1000000;
 }

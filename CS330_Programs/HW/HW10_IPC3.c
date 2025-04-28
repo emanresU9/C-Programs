@@ -11,9 +11,6 @@
 #include <sys/stat.h>   //for file checking
 #include <sys/random.h> //for random number generation
 #include <time.h>       //for randome number generation
-// #include <errno.h>
-// #include <printf.h>
-// #include <pthread.h>
 
 #define CHECK(condition, location_msg) \
 do { \
@@ -28,11 +25,11 @@ do { \
 #define MESS_QUEUE "/mq1010"
 #define MSG_SIZE 100
 #define MAX_MSG 10
-#define EXIT "Byeeee"
+#define EXIT "KILL"
 
 struct mq_attr qAttr;
 
-void producer(char *filename) {
+void producer(int producerID ,char *filename, int consumer_count) {
     sem_t *workers;
     sem_t *jobs;
     mqd_t mq;
@@ -82,7 +79,7 @@ void producer(char *filename) {
         // decrement the workers sem
         sem_wait(workers);
 
-        printf("Producer send: %s\n", msg);
+        printf("Producer %-2d | Sending : %-26s\n", producerID, msg);
 
         // send msg on the queue
         ret = mq_send(mq, msg, sizeof(msg),0);
@@ -92,10 +89,20 @@ void producer(char *filename) {
 
     }//END WHILE
 
+    //End and Wait for consumers
+    for (int i = 0; i < consumer_count; i++) {
+        sem_wait(workers);
+        printf("Producer %-2d | %-8s: %-26s\n", producerID,"sending", EXIT);
+        mq_send(mq, EXIT, sizeof(EXIT), 0);
+        sem_post(jobs);
+        wait(NULL);
+    }
+
     sem_close(workers);
     sem_close(jobs);
     mq_close(mq);
 }
+
 void consumer(int consumerID) {
     sem_t *workers;
     sem_t *jobs;
@@ -119,7 +126,7 @@ void consumer(int consumerID) {
     mq = mq_open(MESS_QUEUE, O_CREAT | O_RDONLY, 0644, &qAttr);
     CHECK((mqd_t)-1 == mq, "consumer's mq_open");
 
-    printf("consumer %d | Ready", consumerID);
+    printf("consumer %-2d | Ready\n", consumerID);
 
     while(1) {
         //Signal worker ready
@@ -141,9 +148,9 @@ void consumer(int consumerID) {
             pos++;
         if (pos == str+MSG_SIZE) {
             if (strcmp(str, EXIT) == 0)
-                printf("Consumer %d | Received EXIT\n", consumerID);
+                printf("Consumer %-2d | Received: %-26s\n", consumerID, EXIT);
             else
-                printf("Consumer %d | Received Invalid Message resulting in Exit\n", consumerID);
+                printf("Consumer %-2d | Received: Invalid Message resulting in Exit\n", consumerID);
             break;
         } 
         else
@@ -156,13 +163,13 @@ void consumer(int consumerID) {
         //remove the exeTime portion from str
         str[idx] = '\0';
 
-        printf("consumer %d | Received: %s\n", consumerID, str);
+        printf("consumer %-2d | Received: %-26s\n", consumerID, str);
 
         //Sleep
         usleep(atoi(exeTime));
 
         //Display
-        printf("consumer %d | Finished: %s | time: %.4f\n", consumerID, str, (double)(atoi(exeTime))/1000000);
+        printf("consumer %-2d | Finished: %-26s | cpu_time: %.4f\n", consumerID, str, (double)(atoi(exeTime))/1000000);
 
         fflush(stdout); 
     }
@@ -185,7 +192,7 @@ void test_for_producer(){
     sem_unlink(WORKERS_SEM);
 
     if(fork()) {
-        producer(filename);
+        producer(1, filename, 1);
         exit(0);
     }
     else {
@@ -211,8 +218,6 @@ void test_for_producer(){
             ret = mq_receive(mq, buff, sizeof(buff), 0);
             CHECK(ret == -1, "test_producer's mq_receive");
 
-            printf("received %s\n", buff);
-            fflush(stdout);
         }
         
         sem_close(workers);
@@ -274,17 +279,19 @@ void test_for_consumer(){
     return;
 }
 
-void main(){
+void main2(){
     // test_for_consumer();
     test_for_producer();
 }
 
-void main1(int argc, char** argv) {
+void main(int argc, char** argv) {
     //For testing////////////////////////////
     argc = 3;
     char *test_args[] = {"Run","input.txt","4"};
     argv = test_args;
     //////////////////////////////////////////
+
+    struct stat st;
 
     qAttr.mq_curmsgs = 0;
     qAttr.mq_flags = 0;
@@ -293,7 +300,6 @@ void main1(int argc, char** argv) {
 
     //Error check arguments
     bool valid = true;
-    struct stat st;
     if (argc != 3) {
         printf("Invalide arguments\n");
         printf("Example: './a.out <filename> <thread_count>\n\n");
@@ -302,10 +308,12 @@ void main1(int argc, char** argv) {
     char* filename = argv[1];
     int consumer_count = atoi(argv[2]);
 
+    //Check if file exists
     if (stat(argv[1], &st) == -1) {
         printf("Error Argument 1: %s. The file does not exist!\n", filename);
         valid = false;
     }
+    //Check consumer_count (argv[2]) validity
     if (consumer_count < 0 || consumer_count > 98) {
         printf("Argument 2 must be a number between 0 and 99!\n");
         valid = false;
@@ -323,7 +331,7 @@ void main1(int argc, char** argv) {
     }
 
     //Run the producer process
-    producer(filename);
+    producer(1, filename, consumer_count);
 
     //Unlink the named queue and sems
     mq_unlink(MESS_QUEUE);

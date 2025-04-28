@@ -85,19 +85,25 @@ void producer(int producerID ,char *filename, int consumer_count) {
         ret = mq_send(mq, msg, sizeof(msg),0);
         CHECK(ret == -1, "producer's mq_send");
 
+        // Tell workers that a job is ready
         sem_post(jobs);
 
     }//END WHILE
 
-    //End and Wait for consumers
+    //Send EXIT to each worker
     for (int i = 0; i < consumer_count; i++) {
+        //Wait until worker is ready
         sem_wait(workers);
+        //Add message to queue
         printf("Producer %-2d | %-8s: %-26s\n", producerID,"sending", EXIT);
         mq_send(mq, EXIT, sizeof(EXIT), 0);
+        //Tell worker that job is ready
         sem_post(jobs);
+        //Wait for the fork join
         wait(NULL);
     }
 
+    //Close the sems and queue
     sem_close(workers);
     sem_close(jobs);
     mq_close(mq);
@@ -129,20 +135,20 @@ void consumer(int consumerID) {
     printf("consumer %-2d | Ready\n", consumerID);
 
     while(1) {
-        //Signal worker ready
+        //Signal producer that a worker is ready
         res = sem_post(workers);
         CHECK(res == -1, "consumer's mq_post");
 
         //Wait for producer to send a job
-        res = sem_post(jobs);
+        res = sem_wait(jobs);
         CHECK(res == -1, "consumer's mq_post");
 
-        //Get message from queue
+        //pull from queue -> str
         res = mq_receive(mq, buff, sizeof(buff), 0); // fill buff
         CHECK((res == -1), "consumer's mq_receive");    // check for error
         strcpy(str, buff);  // copy buff into str
 
-        //Find index of comma
+        //Find the index of a comma character in str
         pos = str;
         while(*pos != ',' && pos != str+MSG_SIZE) 
             pos++;
@@ -156,19 +162,20 @@ void consumer(int consumerID) {
         else
             idx = (int)(pos - str);
 
-        //extract the exeTime portion of str
+        //extract portion of str after comma -> exection-time
         res = snprintf(exeTime, sizeof(exeTime), "%s", str+idx+1);
         CHECK(res < 0, "consumer's snprintf");
 
-        //remove the exeTime portion from str
+        //remove portion of str after coma
         str[idx] = '\0';
 
+        //Print consumer received-job message
         printf("consumer %-2d | Received: %-26s\n", consumerID, str);
 
         //Sleep
         usleep(atoi(exeTime));
 
-        //Display
+        //Print concumer finished-job message
         printf("consumer %-2d | Finished: %-26s | cpu_time: %.4f\n", consumerID, str, (double)(atoi(exeTime))/1000000);
 
         fflush(stdout); 
@@ -285,7 +292,8 @@ void main2(){
 }
 
 void main(int argc, char** argv) {
-    //For testing////////////////////////////
+
+    // Over write arguments //////////////////
     argc = 3;
     char *test_args[] = {"Run","input.txt","4"};
     argv = test_args;

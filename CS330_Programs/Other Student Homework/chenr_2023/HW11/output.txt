@@ -1,0 +1,40 @@
+CONSUMER
+CONSUMER
+CONSUMER
+PRODUCER
+Producer Message Length is: 7
+Producer Message is: Testing
+Producer Message Length is: 5
+Producer Message is: stuff
+Producer Message Length is: 3
+Producer Message is: for
+Producer Message Length is: 4
+Producer Message is: this
+Producer Message Length is: 3
+Received Testing
+Producer Message is: I'm
+Producer Message Length is: 3
+Producer Message is: not
+Received for
+Producer Message Length is: 4
+Producer Message is: sure
+Producer Message Length is: 4
+Producer Message is: what
+Received this
+Producer Message Length is: 4
+Producer Message is: this
+Producer Message Length is: 2
+Producer Message is: is
+Producer Message Length is: 4
+Producer Message is: This
+Producer Message Length is: 2
+Producer Message is: is
+Producer Message Length is: 1
+Producer Message is: a
+Producer Message Length is: 7
+Producer Message is: testing
+Producer Message Length is: 4
+Producer Message is: file
+Waiting for child process
+Waiting for child process
+Waiting for child process

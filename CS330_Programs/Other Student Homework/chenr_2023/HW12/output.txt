@@ -1,0 +1,23 @@
+chenr@cocoM6800:~/www/HW12$ ./server
+Client: Hi
+ENV
+Enter message for the client: Hello
+Client: How are you?
+
+Enter message for the client: Good
+Client: Bye
+
+
+Enter message for the client: Goodbye
+
+
+chenr@cocoM6800:~/www/HW12$ ./client
+Enter message for the server: Hi
+Server: Hello
+
+Enter message for the server: How are you?
+Server: Good
+re you?
+
+Enter message for the server: Bye
+Server: Goodbye

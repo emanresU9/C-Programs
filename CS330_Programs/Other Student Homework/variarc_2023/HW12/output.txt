@@ -1,0 +1,17 @@
+Server Output:
+
+Server listening on port 8888...
+Client connected: 127.0.0.1
+Client: hello
+Enter message for client: hi client
+Client: goodbye
+Enter message for client: bye
+
+
+Client Output:
+
+Connected to server at 127.0.0.1:8888
+Enter message for server: hello
+Server: hi client
+Enter message for server: goodbye   
+Server: bye

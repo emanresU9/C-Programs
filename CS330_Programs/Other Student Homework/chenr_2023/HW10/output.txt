@@ -1,0 +1,38 @@
+CONSUMER
+Receiving
+CONSUMER
+CONSUMER
+Receiving
+Receiving
+PRODUCER
+Producer Message Length is: 2
+Producer Message is: He
+Producer Message Length is: 5
+Producer Message is: walks
+Producer Message Length is: 3
+Producer Message is: the
+Producer Message Length is: 4
+Producer Message is: path
+Producer Message Length is: 3
+Producer Message is: The
+Producer Message Length is: 4
+Producer Message is: path
+Received He
+Received walks
+Producer Message Length is: 7
+Producer Message is: covered
+Producer Message Length is: 2
+Producer Message is: in
+Producer Message Length is: 6
+Producer Message is: thorns
+Received the
+Producer Message Length is: 5
+Producer Message is: Never
+Producer Message Length is: 8
+Producer Message is: stopping
+Producer Message Length is: 4
+Producer Message is: even
+Producer Message Length is: 4
+Producer Message is: with
+Producer Message Length is: 5
+Producer Message is: blood
